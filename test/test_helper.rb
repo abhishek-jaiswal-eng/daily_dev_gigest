@@ -1,6 +1,7 @@
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
+require "simplecov"
 
 module ActiveSupport
   class TestCase
@@ -11,5 +12,11 @@ module ActiveSupport
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
+    SimpleCov.start 'rails' do
+      enable_coverage :branch
+      add_filter '/test/'        # skip test files
+      add_filter '/config/'      # skip Rails config
+      add_filter '/channels/'    # optional
+    end
   end
 end

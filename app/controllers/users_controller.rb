@@ -3,13 +3,12 @@ class UsersController < ApplicationController
 
   def index
     render json: { users: User.all }, status: 200  and return if User.any?
-    render json: { message: "No user is present." }, status: :not_found
+    render json: { errors: { message: "No user is present." } }, status: :not_found
   end
 
   def create
     render json: { errors: { message: 'User Already Present. Please Login'}}, status: 422 and return if check_existing_user(user_params)
     user = User.new(user_params)
-    debugger
     if user.valid? && user.save
       render json: {
         data: ActiveModelSerializers::SerializableResource.new(user, each_serializer: UsersSerializer),

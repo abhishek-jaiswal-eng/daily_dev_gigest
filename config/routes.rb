@@ -7,7 +7,7 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
-  resources :users, only: [:create] do
+  resources :users, only: [:create, :index] do
     get :account_details, to: 'users#show', on: :collection
     post :login, to: 'logins#create', on: :collection
   end
