@@ -1,0 +1,103 @@
+name: "Ruby on Rails CI"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# ---------------------------------------------------------------------------
+# 1) SECURITY / DEPENDENCY   (bundler‑audit + brakeman)
+# ---------------------------------------------------------------------------
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true         # caches gems automatically
+
+      - name: Install binstubs
+        run: bundle binstubs bundler-audit brakeman
+
+      - name: Audit gems (bundler-audit)
+        run: bin/bundler-audit --update
+
+      - name: Static code security (brakeman)
+        run: bin/brakeman -q -w2
+
+# ---------------------------------------------------------------------------
+# 2) LINTING                 (RuboCop)
+# ---------------------------------------------------------------------------
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Install binstub
+        run: bundle binstubs rubocop
+
+      - name: Run RuboCop
+        run: bin/rubocop --parallel
+
+# ---------------------------------------------------------------------------
+# 3) TEST SUITE              (MiniTest + PostgreSQL)
+# ---------------------------------------------------------------------------
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:11-alpine
+        env:
+          POSTGRES_DB: rails_test
+          POSTGRES_USER: rails
+          POSTGRES_PASSWORD: password
+        ports:
+          - "5432:5432"
+        # Give Postgres time to boot
+        options: >-
+          --health-cmd="pg_isready -U rails"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://rails:password@localhost:5432/rails_test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # If you use JS bundling (esbuild, vite, etc.) uncomment below
+      # - name: Install Node (for JS build)
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 20
+      #     cache: yarn
+
+      - name: Prepare database
+        run: |
+          bin/rails db:schema:load --trace
+
+      # Run MiniTest (rails test)
+      - name: Run test suite
+        run: |
+          bin/rails test
