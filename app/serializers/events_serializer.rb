@@ -2,6 +2,7 @@ class EventsSerializer < ApplicationSerializer
   attributes *[
     :title,
     :description,
+    :status,
     :user
   ]
 

@@ -17,6 +17,7 @@ module ActiveSupport
       add_filter '/test/'        # skip test files
       add_filter '/config/'      # skip Rails config
       add_filter '/channels/'    # optional
+      add_filter '/mailers/, /jobs/'
     end
   end
 end
